@@ -28,7 +28,8 @@ export class Teacher extends React.Component {
             connectionError: false,
             notATeacher: false
         };
-        this.io = socketIOClient.connect();
+        let server = window.location.protocol + "//" + window.location.host;
+        this.io = socketIOClient.connect(server, {path: process.env.PUBLIC_URL + "/socket.io"});
     }
 
     componentDidMount() {

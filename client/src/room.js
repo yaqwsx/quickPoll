@@ -5,7 +5,6 @@ import { Spinbox, ConnectionErrorMessage, NonExistentRoom, UnknownError } from "
 
 enableMapSet();
 
-
 export class Room extends React.Component {
     constructor(){
         super();
@@ -16,7 +15,8 @@ export class Room extends React.Component {
     }
 
     componentDidMount() {
-        this.io = socketIOClient.connect();
+        let server = window.location.protocol + "//" + window.location.host;
+        this.io = socketIOClient.connect(server, {path: process.env.PUBLIC_URL + "/socket.io"});
         this.io.on("roomUpdate", this.onRoomUpdate);
         this.io.on("reconnect", attemptNumber => {
             this.joinRoom();

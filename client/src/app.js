@@ -22,7 +22,7 @@ function Container(props) {
 export default function App() {
     return (
         <Container>
-            <Router>
+            <Router basename={process.env.PUBLIC_URL} >
                 <Switch>
                     <Route exact path="/">
                         <Home />
@@ -40,10 +40,11 @@ export default function App() {
 }
 
 function Home() {
+    console.log(process.env.PUBLIC_URL);
     return <>
         <div className="py-4 my-8 w-full bg-blue-300 rounded">
             <div className="text-center">
-                <img src="/favicon.svg"
+                <img src={process.env.PUBLIC_URL + "/favicon.svg"}
                     alt=""
                     style={{width: "150px", height: "150px"}}
                     className="inline-block"/>
