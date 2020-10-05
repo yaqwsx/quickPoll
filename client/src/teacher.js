@@ -471,9 +471,11 @@ class StudentAnswerOverview extends React.Component {
             ? this.renderEmptyBody()
             : this.sortedAnswers(this.props.answers).map( (answer, rowIdx) => {
                 let username = answer[0];
-                let rowClassName = "";
+                let rowClassName = " border-solid border-b-2";
                 if (rowIdx === this.state.activeRow)
-                    rowClassName += " border-solid border-black border-b-2";
+                    rowClassName += " border-black";
+                else
+                    rowClassName += " border-white";
                 return <tr key={username}
                           className={rowClassName}
                           onMouseEnter={e => this.handleRowEnter(rowIdx, e)}
