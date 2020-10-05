@@ -137,7 +137,7 @@ class TeacherRoomOverview extends React.Component {
         this.setState({creatingRoom: true});
         this.props.io.emit("createRoom", (roomId) => {
             this.setState({creatingRoom: false});
-            this.props.history.push("/teacher/room/" + roomId + "/edit");
+            this.props.history.push(process.env.PUBLIC_URL + "/teacher/room/" + roomId + "/edit");
         });
     }
 
@@ -162,7 +162,7 @@ class TeacherRoomOverview extends React.Component {
             </thead>
             <tbody>{
                 this.state.rooms.map(room => {
-                    let roomRelUrl = "/room/" + room.id;
+                    let roomRelUrl = process.env.PUBLIC_URL + "/room/" + room.id;
                     let roomUrl = window.location.protocol + "//" + window.location.host + roomRelUrl;
                     return <tr key={room.id}>
                         <td>
@@ -176,7 +176,7 @@ class TeacherRoomOverview extends React.Component {
                             </Link>
                         </td>
                         <td>
-                            <Link to={"/teacher/room/" + room.id}>
+                            <Link to={process.env.PUBLIC_URL + "/teacher/room/" + room.id}>
                                 {room.name}
                             </Link>
                         </td>
@@ -187,12 +187,12 @@ class TeacherRoomOverview extends React.Component {
                             {room.activeMembers}
                         </td>
                         <td>
-                            <Link to={"/teacher/room/" + room.id}>
+                            <Link to={process.env.PUBLIC_URL + "/teacher/room/" + room.id}>
                                 <button className="inline-block mx-1 bg-blue-500 hover:bg-blue-700 text-black py-1 px-4 rounded">
                                     Prohlížet
                                 </button>
                             </Link>
-                            <Link to={"/teacher/room/" + room.id + "/edit"}>
+                            <Link to={process.env.PUBLIC_URL + "/teacher/room/" + room.id + "/edit"}>
                                 <button className="inline-block mx-1 bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded">
                                     Upravit
                                 </button>
@@ -297,7 +297,7 @@ class TeacherRoomView extends React.Component {
             return <Spinbox/>
         }
 
-        let roomRelUrl = "/room/" + this.state.layout.id;
+        let roomRelUrl = process.env.PUBLIC_URL + "/room/" + this.state.layout.id;
         let roomUrl = window.location.protocol + "//" + window.location.host + roomRelUrl;
         return <>
             <div className="w-full flex items-center">
@@ -309,12 +309,12 @@ class TeacherRoomView extends React.Component {
                         <FontAwesomeIcon icon="clipboard"/> {roomUrl}
                     </button>
                     </CopyToClipboard>
-                <Link to={"/teacher/room/" + this.state.layout.id + "/edit"} className="block flex-none ml-auto">
+                <Link to={process.env.PUBLIC_URL + "/teacher/room/" + this.state.layout.id + "/edit"} className="block flex-none ml-auto">
                     <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded">
                         Upravit místnost
                     </button>
                 </Link>
-                <Link to={"/teacher"} className="block flex-none ml-2">
+                <Link to={process.env.PUBLIC_URL + "/teacher"} className="block flex-none ml-2">
                     <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded">
                         Zpět na přehled místností
                     </button>
@@ -600,7 +600,7 @@ class TeacherRoomEdit extends React.Component {
             return <Spinbox/>
         }
 
-        let roomRelUrl = "/room/" + this.state.layout.id;
+        let roomRelUrl = process.env.PUBLIC_URL + "/room/" + this.state.layout.id;
         let roomUrl = window.location.protocol + "//" + window.location.host + roomRelUrl;
         return <>
             <div className="w-full flex items-center">
@@ -612,12 +612,12 @@ class TeacherRoomEdit extends React.Component {
                         <FontAwesomeIcon icon="clipboard"/> {roomUrl}
                     </button>
                     </CopyToClipboard>
-                <Link to={"/teacher/room/" + this.state.layout.id} className="block flex-none ml-auto">
+                <Link to={process.env.PUBLIC_URL + "/teacher/room/" + this.state.layout.id} className="block flex-none ml-auto">
                     <button className="bg-blue-500 hover:bg-blue-700 text-black py-1 px-4 rounded">
                         Prohlížet místnost
                     </button>
                 </Link>
-                <Link to={"/teacher"} className="block flex-none ml-2">
+                <Link to={process.env.PUBLIC_URL + "/teacher"} className="block flex-none ml-2">
                     <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded">
                         Zpět na přehled místností
                     </button>

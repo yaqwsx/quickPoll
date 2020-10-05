@@ -64,7 +64,7 @@ export class NotATeacherError extends React.Component {
 
     render() {
         if (this.state.redirect)
-            return <Redirect to="/"/>
+            return <Redirect to={process.env.PUBLIC_URL}/>
         return <div className="w-full text-center">
             <h1 className="text-xl m-8">Pro tuto akci nemáte dostatečná oprávnění. Za chvíli budete přesměrování na úvodní stránku</h1>
         </div>
