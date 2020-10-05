@@ -1,2 +1,9 @@
 SECRET_KEY = "Put your secret key here"
 TEACHERS = ["xmrazek7", "xstill"] # List all your teachers here
+# Specify database connection. You can specify any argument of psycopg2.connect
+DB_CONNECTION = {
+    "user": "quickpoll",
+    "password": "quickpoll",
+    "host": "localhost",
+    "database": "quickpoll"
+}

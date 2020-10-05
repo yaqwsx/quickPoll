@@ -100,6 +100,9 @@ class RoomSuite:
             return self.generateId()
         return idString
 
+    def addExistingRoom(self, room):
+        self.rooms[room.id] = room
+
     def addRoom(self, id=None, **kwargs):
         if id is None:
             id = self.generateId()

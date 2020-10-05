@@ -1,39 +1,47 @@
-from quickPoll import app, socketio
+from quickPoll import app, socketio, db
+
 from flask import request
 from flask_socketio import join_room, leave_room, close_room
 
 from quickPoll.room import Room, RoomSuite
 from quickPoll.widgets import ChoiceWidget, TextWidget, Choice
+import quickPoll.dbFun as dbFun
+
+def addDemoRoom(suite):
+    # Initialize single demonstration room
+    room = suite.addRoom("demo")
+    room.name = "Demonstrační místnost"
+    room.description = "Zde může být sofistikovaný popisek místnosti"
+
+    room.author = "system"
+    w1 = room.addWidget(ChoiceWidget("Zadej možnost v single-choice widgetu", False, [
+        Choice("Možnost 1"),
+        Choice("Možnost 2"),
+    ]))
+    w1.visible = True
+    w1.description = "Volitelný, sofistikovaný popis otázky"
+
+    w2 = room.addWidget(TextWidget("Chceš nám něco vzkázat skrze textový vstup?"))
+    w2.visible = True
+    w2.description = "Neboj se být upřímný v tomto volitelném popisku otázky"
+
+    w3 = room.addWidget(ChoiceWidget("Zadej možnost v multiple-choice widgetu", True, [
+        Choice("Možnost 1"),
+        Choice("Možnost 2"),
+        Choice("Možnost 3"),
+    ]))
+    w3.visible = True
+    return room
 
 roomSuite = RoomSuite()
-
-# Initialize single demonstration room
-r1 = roomSuite.addRoom("demo")
-r1.name = "Demonstrační místnost"
-r1.description = "Zde může být sofistikovaný popisek místnosti"
-
-r1.author = "system"
-w1 = r1.addWidget(ChoiceWidget("Zadej možnost v single-choice widgetu", False, [
-    Choice("Možnost 1"),
-    Choice("Možnost 2"),
-]))
-w1.visible = True
-w1.description = "Volitelný, sofistikovaný popis otázky"
-
-w2 = r1.addWidget(TextWidget("Chceš nám něco vzkázat skrze textový vstup?"))
-w2.visible = True
-w2.description = "Neboj se být upřímný v tomto volitelném popisku otázky"
-
-w3 = r1.addWidget(ChoiceWidget("Zadej možnost v multiple-choice widgetu", True, [
-    Choice("Možnost 1"),
-    Choice("Možnost 2"),
-    Choice("Možnost 3"),
-]))
-w3.visible = True
+for room in dbFun.loadRooms(db):
+    roomSuite.addExistingRoom(room)
+if not roomSuite.hasRoom("demo"):
+    r = addDemoRoom(roomSuite)
+    dbFun.updateRoom(db, r)
 
 def isTeacher(username):
     return username in app.config["TEACHERS"]
-
 
 @socketio.on("disconnect")
 def disconnect():
@@ -194,6 +202,7 @@ def deleteRoom(roomId):
     if not roomSuite.hasRoom(roomId):
         return
     roomSuite.deleteRoom(roomId)
+    dbFun.deleteRoom(db, roomId)
 
     socketio.emit("room", {
             "status": "error",
@@ -213,6 +222,7 @@ def createRoom():
     if not isTeacher(username):
         return
     room = roomSuite.addRoom(author=username)
+    dbFun.updateRoom(db, room)
     updateRoomsOverview()
     return room.id
 
@@ -228,6 +238,7 @@ def reorderWidgets(roomId, widgetsId):
         return
 
     room.reorderWidgets(widgetsId)
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
@@ -240,6 +251,7 @@ def deleteWidget(roomId, widgetId):
         return
     room = roomSuite.getRoom(roomId)
     room.deleteWidget(widgetId)
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
@@ -258,7 +270,7 @@ def addWidget(roomId, type):
         room.addWidget(ChoiceWidget("Nová výběrová otázka", False, []))
     else:
         return
-
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
@@ -278,7 +290,7 @@ def changeRoomPropertyHandler(request, roomId, propertyName, propertyValue):
         return
     room = roomSuite.getRoom(roomId)
     setattr(room, propertyName, propertyValue)
-
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
@@ -293,7 +305,7 @@ def changeWidgetPropertyHandler(request, roomId, widgetId, propertyName, propert
     if widget is None:
         return
     setattr(widget, propertyName, propertyValue)
-
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
@@ -336,7 +348,7 @@ def deleteChoice(roomId, widgetId, choiceId):
     if room is None or widget is None or choice is None:
         return
     widget.deleteChoice(choiceId)
-
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
@@ -346,7 +358,7 @@ def deleteChoice(roomId, widgetId, choiceId, value):
     if room is None or widget is None or choice is None:
         return
     choice.text = value
-
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
@@ -356,13 +368,12 @@ def deleteChoice(roomId, widgetId):
     if room is None or widget is None:
         return
     widget.addChoice(Choice(""))
-
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
 @socketio.on("reorderChoices")
 def deleteChoice(roomId, widgetId, choicesIds):
-    print(roomId, widgetId, choicesIds)
     room, widget, choice = validateForChoice(request, roomId, widgetId, None)
     if room is None or widget is None:
         return
@@ -370,7 +381,7 @@ def deleteChoice(roomId, widgetId, choicesIds):
         return
 
     widget.reorderChoices(choicesIds)
-
+    dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
 
