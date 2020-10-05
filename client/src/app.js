@@ -40,7 +40,6 @@ export default function App() {
 }
 
 function Home() {
-    console.log(process.env.PUBLIC_URL);
     return <>
         <div className="py-4 my-8 w-full bg-blue-300 rounded">
             <div className="text-center">
