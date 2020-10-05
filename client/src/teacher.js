@@ -345,7 +345,7 @@ class StudentAnswerOverview extends React.Component {
                             let colspan = widget.type === "text"
                                 ? 1
                                 : widget.choices.length;
-                            let className = "p-1 pt-3 text-lg";
+                            let className = "p-1 pt-3 text-lg ";
                             className += " " + this.cellBorders(0, 1);
                             className += " " + this.widgetColumnStyle(index);
                             return <th key={widget.id} colSpan={colspan} className={className}>
@@ -357,7 +357,7 @@ class StudentAnswerOverview extends React.Component {
                 <tr>
                     {
                         this.props.layout.widgets.flatMap((widget, index) => {
-                            let className = "p-1 " + this.widgetColumnStyle(index);
+                            let className = "p-1  " + this.widgetColumnStyle(index);
                             if (widget.type === "text") {
                                 className += " " + this.cellBorders(0, 1);
                                 return [<th key={widget.id} className={className}></th>];
@@ -429,7 +429,7 @@ class StudentAnswerOverview extends React.Component {
         if (Object.keys(answers).includes(widgetId)) {
             text = answers[widgetId];
         }
-        let className = "px-2 " + this.cellBorders(0, 1);
+        let className = "px-2 break-all " + this.cellBorders(0, 1);
         className += " " + this.widgetColumnStyle(index);
         return [<td key={widget.id} className={className}>
             {text}
@@ -498,7 +498,7 @@ class StudentAnswerOverview extends React.Component {
     render() {
         if (this.props.layout === undefined)
             return <Spinbox/>
-        return <table className="w-full">
+        return <table className="w-full table-auto break-words">
             { this.renderTableHeader() }
             { this.renderTableBody() }
         </table>
