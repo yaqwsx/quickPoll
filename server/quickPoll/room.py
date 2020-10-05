@@ -61,8 +61,6 @@ class Room:
         return prunedAnswers
 
     def updateAnswers(self, username, answers):
-        print(answers)
-        print(self.pruneAnswers(answers))
         self.memberAnswers[username] = self.pruneAnswers(answers)
 
     def studentLayout(self):
