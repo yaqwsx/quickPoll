@@ -2,6 +2,7 @@ from quickPoll import app, socketio, db
 
 from flask import request
 from flask_socketio import join_room, leave_room, close_room
+from copy import deepcopy
 
 from quickPoll.room import Room, RoomSuite
 from quickPoll.widgets import ChoiceWidget, TextWidget, Choice
@@ -384,6 +385,24 @@ def deleteChoice(roomId, widgetId, choicesIds):
     dbFun.updateRoom(db, room)
     updateRoomLayout(room)
     return roomOverview(room)
+
+@socketio.on("cloneRoom")
+def cloneRoom(roomId):
+    username = request.environ["AUTH_USER"]
+    if not isTeacher(username):
+        return
+    if not roomSuite.hasRoom(roomId):
+        return
+    room = roomSuite.getRoom(roomId)
+
+    newRoom = Room(None, room.name + " (klon)", username, room.description)
+    for widget in room.widgets:
+        newRoom.addWidget(deepcopy(widget))
+    roomSuite.addExistingRoom(newRoom)
+    dbFun.updateRoom(db, newRoom)
+
+    updateRoomsOverview()
+
 
 @socketio.on("whoAmI")
 def whoAmI():

@@ -203,6 +203,13 @@ class TeacherRoomOverview extends React.Component {
                                     ? <InlineSpinbox className="mx-2"/>
                                     : "Smazat" }
                             </button>
+                            <BusyButton
+                                className="flex-1 mr-2 bg-green-500 hover:bg-green-700 text-black py-1 px-4 rounded"
+                                onClick={finishedCallback => {
+                                    this.props.io.emit("cloneRoom", room.id, finishedCallback);
+                                }}>
+                                    Klonovat
+                            </BusyButton>
                         </td>
                     </tr>})
             }</tbody>
