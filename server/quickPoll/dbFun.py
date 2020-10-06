@@ -4,16 +4,21 @@ import psycopg2.extras
 import json
 
 def createTables(db):
-    cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS rooms (
-            id VARCHAR(64) NOT NULL PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT NOT NULL,
-            author VARCHAR(64) NOT NULL,
-            layout json NOT NULL
-        );""")
-    db.commit()
+    try:
+        cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS rooms (
+                id VARCHAR(64) NOT NULL PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                author VARCHAR(64) NOT NULL,
+                layout json NOT NULL
+            );""")
+    except Exception as e:
+        db.rollback()
+        raise
+    else:
+        db.commit()
 
 def buildChoiceWidget(dict):
     w = ChoiceWidget(dict["name"], dict["multiple"],
@@ -55,25 +60,35 @@ def updateRoom(db, room):
     Update given room in database
     """
     l = room.teacherLayout()
-    cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cursor.execute("""
-        INSERT INTO rooms (id, name, description, author, layout)
-            VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (id) DO UPDATE
-            SET name = excluded.name,
-                description = excluded.description,
-                author = excluded.author,
-                layout = excluded.layout;
-        """, [
-            l["id"],
-            l["name"],
-            l["description"],
-            l["author"],
-            json.dumps(l["widgets"])
-        ])
-    db.commit()
+    try:
+        cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("""
+            INSERT INTO rooms (id, name, description, author, layout)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE
+                SET name = excluded.name,
+                    description = excluded.description,
+                    author = excluded.author,
+                    layout = excluded.layout;
+            """, [
+                l["id"],
+                l["name"],
+                l["description"],
+                l["author"],
+                json.dumps(l["widgets"])
+            ])
+    except Exception as e:
+        db.rollback()
+        raise
+    else:
+        db.commit()
 
 def deleteRoom(db, roomId):
-    cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cursor.execute("DELETE FROM table_name WHERE id = %s;", [roomId])
-    db.commit()
+    try:
+        cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("DELETE FROM rooms WHERE id = %s;", [roomId])
+    except Exception as e:
+        db.rollback()
+        raise
+    else:
+        db.commit()
