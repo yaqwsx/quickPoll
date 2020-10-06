@@ -304,8 +304,14 @@ class TeacherRoomView extends React.Component {
                 <h1 className="text-2xl flex-none">
                     Místnost "{this.state.layout.name}"
                 </h1>
+                <div className="text-sm mx-1">
+                        (aktivních {
+                        this.state.answers !== undefined
+                            ? Object.keys(this.state.answers).length
+                            : "0"})
+                </div>
                 <CopyToClipboard text={roomUrl}>
-                    <button className="flex-none mx-8 py-2 px-4 text-base text-gray-700 outline-none" onClick={e => e.stopPropagation()}>
+                    <button className="flex-none text-sm mx-8 py-2 px-4 text-gray-700 outline-none" onClick={e => e.stopPropagation()}>
                         <FontAwesomeIcon icon="clipboard"/> {roomUrl}
                     </button>
                     </CopyToClipboard>
