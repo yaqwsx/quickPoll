@@ -542,7 +542,6 @@ class StudentAnswerOverview extends React.Component {
             let info = this.props.members[x[0]];
             return info !== undefined && !info.active;
         });
-        passiveStudents = new Array(100).fill(passiveStudents).flat();
 
 
         return <tbody>{
