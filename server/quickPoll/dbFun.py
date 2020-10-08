@@ -14,6 +14,16 @@ def createTables(db):
                 author VARCHAR(64) NOT NULL,
                 layout json NOT NULL
             );""")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS people (
+                login VARCHAR(32) NOT NULL PRIMARY KEY,
+                name TEXT,
+                uco INTEGER
+            );""")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS teachers (
+                login VARCHAR(32) NOT NULL PRIMARY KEY
+            );""")
     except Exception as e:
         db.rollback()
         raise
@@ -92,3 +102,28 @@ def deleteRoom(db, roomId):
         raise
     else:
         db.commit()
+
+def memberInfo(db, members, activeMembers):
+    """
+    Collect information (real name, UČO teacher status) for given members
+    """
+    if len(members) == 0:
+        return {}
+    try:
+        cursor = db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("""
+                SELECT * from people
+            LEFT JOIN
+                (SELECT login, True as teacher FROM teachers) as t
+            USING (login)
+            WHERE login in %s;""",
+            [tuple(members)])
+        return { x["login"]: {
+                "uco": x["uco"],
+                "name": x["name"],
+                "teacher": bool(x["teacher"]),
+                "active": x["login"] in activeMembers
+            } for x in cursor }
+    except Exception as e:
+        db.rollback()
+        raise

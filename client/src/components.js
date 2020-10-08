@@ -109,3 +109,69 @@ export class BusyButton extends React.Component {
 
     }
 }
+
+export function PersonInfo(props) {
+    if (props.info) {
+        let className = ""
+        if (props.info.teacher)
+            className += " text-gray-600"
+        if (props.className !== undefined)
+            className += " " + props.className;
+        return <span className={className}>{props.info["name"]}</span>;
+    }
+    return props.login;
+}
+
+export class PersonInfoExtra extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            hover: false
+        }
+    }
+
+    assignRef = (element) => {
+        this.container = element;
+    }
+
+    handleMouseEnter = () => {
+        this.setState({"hover": true});
+    }
+
+    handleMouseLeave= () => {
+        this.setState({"hover": false});
+    }
+
+    render() {
+        let info = this.props.info;
+        let login = this.props.login;
+        return (
+            <div
+                className="cursor-default w-full h-full"
+                onMouseEnter={this.handleMouseEnter}
+                onMouseLeave={this.handleMouseLeave}>
+                    <PersonInfo info={info} login={login} />
+                {
+                    this.state.hover && info !== undefined
+                        ? <div className="z-40 absolute bg-white border-solid border-gray-600 border-2 p-2 rounded">
+                            <p>
+                                <span className="font-bold">login: </span> {login}
+                            </p>
+                            <p>
+                                <span className="font-bold">UČO: </span>
+                                    <a href={"https://is.muni.cz/auth/osoba/" + String(info.uco)}
+                                       className="no-underline hover:underline text-blue-500 text-lg">
+                                        {info.uco}
+                                    </a>
+                            </p>
+                            {
+                                info.teacher
+                                ? <p>Teacher</p>
+                                : ""
+                            }
+                          </div>
+                        : <></>
+                }
+            </div>)
+    }
+}

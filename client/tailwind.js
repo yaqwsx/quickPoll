@@ -16,7 +16,7 @@ module.exports = {
          sm: "100%",
          md: "100%",
          lg: "100%",
-         xl: "1600px"
+         xl: "1800px"
       }
     },
     minWidth: {

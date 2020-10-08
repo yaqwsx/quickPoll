@@ -16,7 +16,7 @@ import {
     NonExistentRoom,
     Checkbox,
     BusyButton,
-    NotATeacherError
+    NotATeacherError, PersonInfo, PersonInfoExtra
 } from "./components";
 import { produce } from "immer";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -181,7 +181,7 @@ class TeacherRoomOverview extends React.Component {
                             </Link>
                         </td>
                         <td>
-                            {room.author}
+                            <PersonInfo login={room.author} info={room.authorInfo} className="text-black"/>
                         </td>
                         <td className="text-center">
                             {room.activeMembers}
@@ -280,6 +280,7 @@ class TeacherRoomView extends React.Component {
             this.setState({
                 layout: response.roomLayout,
                 answers: response.answers,
+                members: response.members,
                 error: undefined
             })
         }
@@ -288,7 +289,7 @@ class TeacherRoomView extends React.Component {
     renderStudentTable = () => {
         if (this.state.layout)
             return <StudentAnswerOverview
-                layout={this.state.layout} answers={this.state.answers}/>
+                layout={this.state.layout} answers={this.state.answers} members={this.state.members}/>
         else
             return "No data";
     }
@@ -307,31 +308,40 @@ class TeacherRoomView extends React.Component {
         let roomRelUrl = "/room/" + this.state.layout.id;
         let roomUrl = window.location.protocol + "//" + window.location.host + process.env.PUBLIC_URL + roomRelUrl;
         return <>
-            <div className="w-full flex items-center">
-                <h1 className="text-2xl flex-none">
-                    Místnost "{this.state.layout.name}"
-                </h1>
-                <div className="text-sm mx-1">
-                        (aktivních {
-                        this.state.answers !== undefined
-                            ? Object.keys(this.state.answers).length
-                            : "0"})
+            <div className="w-full flex items-center flex-wrap my-2">
+                <div className="flex-none mx-0 flex items-center w-full lg:w-1/3">
+                    <h1 className="text-2xl flex-none">
+                        Místnost "{this.state.layout.name}"
+                    </h1>
+                    <div className="text-sm mx-1">
+                            (aktivních {
+                            this.state.answers !== undefined
+                                ? Object.keys(this.state.answers).filter(x => {
+                                        let info = this.state.members[x];
+                                        return info === undefined || info.active;
+                                    }).length
+                                : "0"})
+                    </div>
                 </div>
-                <CopyToClipboard text={roomUrl}>
-                    <button className="flex-none text-sm mx-8 py-2 px-4 text-gray-700 outline-none" onClick={e => e.stopPropagation()}>
-                        <FontAwesomeIcon icon="clipboard"/> {roomUrl}
-                    </button>
-                    </CopyToClipboard>
-                <Link to={"/teacher/room/" + this.state.layout.id + "/edit"} className="block flex-none ml-auto">
-                    <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded">
-                        Upravit místnost
-                    </button>
-                </Link>
-                <Link to={"/teacher"} className="block flex-none ml-2">
-                    <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded">
-                        Zpět na přehled místností
-                    </button>
-                </Link>
+                <div className="flex-none mx-0 flex items-center w-full lg:w-1/3">
+                    <CopyToClipboard text={roomUrl}>
+                        <button className="flex-none text-sm py-2 px-1 text-gray-700 outline-none" onClick={e => e.stopPropagation()}>
+                            <FontAwesomeIcon icon="clipboard"/> {roomUrl}
+                        </button>
+                        </CopyToClipboard>
+                </div>
+                <div className="flex-none mx-0 flex items-center w-full lg:w-1/3">
+                    <Link to={"/teacher/room/" + this.state.layout.id + "/edit"} className="block flex-none ml-auto w-1/2 lg:w-auto">
+                        <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded w-full lg:w-auto">
+                            Upravit místnost
+                        </button>
+                    </Link>
+                    <Link to={"/teacher"} className="block flex-none ml-2 w-1/2 lg:w-auto">
+                        <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded w-full lg:w-auto">
+                            Zpět na přehled místností
+                        </button>
+                    </Link>
+                </div>
             </div>
             {this.renderStudentTable()}
         </>;
@@ -342,7 +352,8 @@ class StudentAnswerOverview extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            activeRow: undefined
+            activeRow: undefined,
+            visibleNames: true
         };
     }
 
@@ -350,7 +361,7 @@ class StudentAnswerOverview extends React.Component {
         return <>
             <thead className="border-b-4 border-white py-1 text-center">
                 <tr>
-                    <th rowSpan="2">
+                    <th>
                         Student
                     </th>
                     {
@@ -358,8 +369,8 @@ class StudentAnswerOverview extends React.Component {
                             let colspan = widget.type === "text"
                                 ? 1
                                 : widget.choices.length;
-                            let className = "p-1 pt-3 text-lg ";
-                            className += " " + this.cellBorders(0, 1);
+                            let className = "p-1 pt-3 ";
+                            className += " " + this.cellBorders(0, 1, index);
                             className += " " + this.widgetColumnStyle(index);
                             return <th key={widget.id} colSpan={colspan} className={className}>
                                 {widget.name}
@@ -368,17 +379,26 @@ class StudentAnswerOverview extends React.Component {
                     }
                 </tr>
                 <tr>
+                    <th>
+                        <input type="checkbox"
+                            className="mx-2"
+                            checked={this.state.visibleNames}
+                            onChange={e => {
+                                this.setState({visibleNames: e.target.checked})
+                            }}/>
+                        Zobrazit jména
+                    </th>
                     {
                         this.props.layout.widgets.flatMap((widget, index) => {
-                            let className = "p-1  " + this.widgetColumnStyle(index);
+                            let className = "p-1 border-white border-b-2 sticky top-0  " + this.widgetColumnStyle(index);
                             if (widget.type === "text") {
-                                className += " " + this.cellBorders(0, 1);
+                                className += " " + this.cellBorders(0, 1, index);
                                 return [<th key={widget.id} className={className}></th>];
                             }
                             if (widget.type === "choice") {
                                 return widget.choices.map((choice, choiceIndex) => {
                                     let thClassName = className;
-                                    thClassName += " " + this.cellBorders(choiceIndex, widget.choices.length);
+                                    thClassName += " " + this.cellBorders(choiceIndex, widget.choices.length, index);
                                     return <th key={String(widget.id) + String(choice.id)} className={thClassName}>
                                         {choice.text}
                                     </th>
@@ -400,23 +420,25 @@ class StudentAnswerOverview extends React.Component {
         return 1;
     }
 
-    renderEmptyBody() {
-        let colspan = 1 + this.props.layout.widgets.reduce((current, w) => {
+    maxColspan() {
+        return 1 + this.props.layout.widgets.reduce((current, w) => {
             return current + this.widgetColspan(w);
         }, 0);
+    }
+
+    renderEmptyBody() {
         return <tr>
-            <td colSpan={colspan} className="text-xl text-center p-4">
+            <td colSpan={this.maxColspan()} className="text-xl text-center p-4">
                 Do této místnosti není nikdo připojen
             </td>
         </tr>
     }
 
     sortedAnswers(answers) {
-        let sortedAnswers = Object.entries(answers);
-        sortedAnswers.sort((a, b) => {
+        answers.sort((a, b) => {
             return a[0].localeCompare(b[0])
         });
-        return sortedAnswers;
+        return answers;
     }
 
     widgetColumnStyle(widgetIdx) {
@@ -426,14 +448,14 @@ class StudentAnswerOverview extends React.Component {
             return "bg-blue-300"
     }
 
-    cellBorders(choiceIdx, choiceCount) {
-        return "border-white border-l-4 border-r-4";
-        // let className = "";
-        // if (choiceIndex === 0)
-        //     className += " border-white border-l-4";
-        // if (choiceIndex === choiceCount - 1)
-        //     className += " border-white border-r-4";
-        // return className;
+    cellBorders = (choiceIndex, choiceCount, widgetIndex) => {
+        let className = "border-white";
+        if (widgetIndex !== -1)
+            className += " border-l-2";
+        let widgetCount = this.props.layout ? this.props.layout.widgets.length : 0;
+        if (widgetIndex !== widgetCount - 1)
+            className += " border-r-2";
+        return className;
     }
 
     renderTextWidgetAnswers(widget, index, answers) {
@@ -442,7 +464,7 @@ class StudentAnswerOverview extends React.Component {
         if (Object.keys(answers).includes(widgetId)) {
             text = answers[widgetId];
         }
-        let className = "px-2 break-all " + this.cellBorders(0, 1);
+        let className = "px-2 break-all " + this.cellBorders(0, 1, index);
         className += " " + this.widgetColumnStyle(index);
         return [<td key={widget.id} className={className}>
             {text}
@@ -462,49 +484,86 @@ class StudentAnswerOverview extends React.Component {
         return widget.choices.map((choice, choiceIndex) => {
             let className = "p-1 text-center";
             className +=  " " + this.widgetColumnStyle(widgetIndex);
-            className += " " + this.cellBorders(choiceIndex, widget.choices.length);
+            className += " " + this.cellBorders(choiceIndex, widget.choices.length, widgetIndex);
             return <td key={String(widget.id) + String(choice.id)} className={className}>
                 { Array.isArray(checkedOptions) && checkedOptions.includes(choice.id) ? <FontAwesomeIcon icon="check-circle"/> : "" }
             </td>});
     }
 
-    handleRowEnter = (row, event) => {
+    handleRowEnter = (login, event) => {
         event.stopPropagation();
-        this.setState({activeRow: row});
+        this.setState({activeRow: login});
     }
 
-    handleRowLeave = (row, event) => {
+    handleRowLeave = (login, event) => {
         event.stopPropagation();
         this.setState({activeRow: undefined});
     }
 
+    renderStudents(students) {
+        return students.map( (answer, rowIdx) => {
+            let username = answer[0];
+            let rowClassName = " border-solid border-b-2";
+            if (username === this.state.activeRow)
+                rowClassName += " border-black";
+            else
+                rowClassName += " border-white";
+            return <tr key={username}
+                      className={rowClassName}
+                      onMouseEnter={e => this.handleRowEnter(username, e)}
+                      onMouseLeave={e => this.handleRowLeave(username, e)}>
+                <td className="p-1">
+                    {
+                        this.state.visibleNames
+                        ? <PersonInfoExtra login={username} info={this.props.members[username]}/>
+                        : ""
+                    }
+                </td>
+                {
+                    this.props.layout.widgets.flatMap((widget, index) => {
+                        if (widget.type === "text")
+                            return this.renderTextWidgetAnswers(widget, index, this.props.answers[username])
+                        if (widget.type === "choice")
+                            return this.renderChoiceWidgetAnswers(widget, index, this.props.answers[username])
+                        return [<td></td>]
+                    })
+                }
+            </tr>
+        });
+    }
+
     renderTableBody() {
+        let activeStudents = Object.entries(this.props.answers).filter(x => {
+            let info = this.props.members[x[0]];
+            return info === undefined || info.active;
+        });
+
+        let passiveStudents = Object.entries(this.props.answers).filter(x => {
+            let info = this.props.members[x[0]];
+            return info !== undefined && !info.active;
+        });
+        passiveStudents = new Array(100).fill(passiveStudents).flat();
+
+
         return <tbody>{
             Object.keys(this.props.answers).length === 0
             ? this.renderEmptyBody()
-            : this.sortedAnswers(this.props.answers).map( (answer, rowIdx) => {
-                let username = answer[0];
-                let rowClassName = " border-solid border-b-2";
-                if (rowIdx === this.state.activeRow)
-                    rowClassName += " border-black";
-                else
-                    rowClassName += " border-white";
-                return <tr key={username}
-                          className={rowClassName}
-                          onMouseEnter={e => this.handleRowEnter(rowIdx, e)}
-                          onMouseLeave={e => this.handleRowLeave(rowIdx, e)}>
-                    <td className="p-1">{username}</td>
-                    {
-                        this.props.layout.widgets.flatMap((widget, index) => {
-                            if (widget.type === "text")
-                                return this.renderTextWidgetAnswers(widget, index, this.props.answers[username])
-                            if (widget.type === "choice")
-                                return this.renderChoiceWidgetAnswers(widget, index, this.props.answers[username])
-                            return [<td></td>]
-                        })
-                    }
-                </tr>
-            })
+            : <>
+                { this.renderStudents(this.sortedAnswers(activeStudents)) }
+                {
+                    passiveStudents.length
+                    ?  <>
+                            <tr>
+                                <td/>
+                                <td colSpan={this.maxColspan() - 1} className="text-lg text-center p-4 pb-1">
+                                    Neaktivní studenti
+                                </td>
+                            </tr>
+                            { this.renderStudents(this.sortedAnswers(passiveStudents)) }
+                        </>
+                    : <></>
+                }
+            </>
         }</tbody>;
     }
 
@@ -618,25 +677,31 @@ class TeacherRoomEdit extends React.Component {
         let roomRelUrl = "/room/" + this.state.layout.id;
         let roomUrl = window.location.protocol + "//" + window.location.host + process.env.PUBLIC_URL + roomRelUrl;
         return <>
-            <div className="w-full flex items-center">
-                <h1 className="text-2xl flex-none">
-                    Místnost "{this.state.layout.name}"
-                </h1>
-                <CopyToClipboard text={roomUrl}>
-                    <button className="flex-none mx-1 py-2 px-4 text-base text-gray-700 outline-none" onClick={e => e.stopPropagation()}>
-                        <FontAwesomeIcon icon="clipboard"/> {roomUrl}
-                    </button>
+            <div className="w-full flex flex-wrap items-center">
+                <div className="flex-none mx-0 flex items-center w-full lg:w-1/3">
+                    <h1 className="text-2xl flex-none">
+                        Místnost "{this.state.layout.name}"
+                    </h1>
+                </div>
+                <div className="flex-none mx-0 flex items-center w-full lg:w-1/3">
+                    <CopyToClipboard text={roomUrl}>
+                        <button className="flex-none mx-1 py-1 text-base text-gray-700 outline-none" onClick={e => e.stopPropagation()}>
+                            <FontAwesomeIcon icon="clipboard"/> {roomUrl}
+                        </button>
                     </CopyToClipboard>
-                <Link to={"/teacher/room/" + this.state.layout.id} className="block flex-none ml-auto">
-                    <button className="bg-blue-500 hover:bg-blue-700 text-black py-1 px-4 rounded">
-                        Prohlížet místnost
-                    </button>
-                </Link>
-                <Link to={"/teacher"} className="block flex-none ml-2">
-                    <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded">
-                        Zpět na přehled místností
-                    </button>
-                </Link>
+                </div>
+                <div className="flex-none mx-0 flex items-center w-full lg:w-1/3">
+                    <Link to={"/teacher/room/" + this.state.layout.id} className="block flex-none ml-auto w-1/2 lg:w-auto">
+                        <button className="bg-blue-500 hover:bg-blue-700 text-black py-1 px-4 rounded w-full lg:w-auto">
+                            Prohlížet místnost
+                        </button>
+                    </Link>
+                    <Link to={"/teacher"} className="block flex-none ml-2 w-1/2 lg:w-auto">
+                        <button className="bg-yellow-500 hover:bg-yellow-700 text-black py-1 px-4 rounded w-full lg:w-auto">
+                            Zpět na přehled místností
+                        </button>
+                    </Link>
+                </div>
             </div>
 
             <RoomProperties

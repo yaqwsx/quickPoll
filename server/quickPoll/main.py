@@ -3,6 +3,7 @@ from quickPoll import app, socketio, db
 from flask import request
 from flask_socketio import join_room, leave_room, close_room
 from copy import deepcopy
+import sys
 
 from quickPoll.room import Room, RoomSuite
 from quickPoll.widgets import ChoiceWidget, TextWidget, Choice
@@ -42,7 +43,15 @@ if not roomSuite.hasRoom("demo"):
     dbFun.updateRoom(db, r)
 
 def isTeacher(username):
-    return username in app.config["TEACHERS"]
+    try:
+        cursor = db.cursor()
+        cursor.execute("SELECT COUNT(*) FROM teachers WHERE login = %s", [username])
+        result = cursor.fetchone()
+        return result[0] > 0
+    except Exception as e:
+        db.rollback()
+        print("Warning, DB query failed", file=sys.stderr)
+        return False
 
 @socketio.on("disconnect")
 def disconnect():
@@ -128,6 +137,7 @@ def roomsOverview(roomSuite):
         "id": id,
         "name": room.name,
         "author": room.author,
+        "authorInfo": dbFun.memberInfo(db, [room.author], [room.author]).get(room.author, None),
         "activeMembers": len(room.memberSessions)
     } for id, room in roomSuite.rooms.items()]
 
@@ -153,7 +163,8 @@ def roomOverview(room):
     return {
         "status": "success",
         "roomLayout": room.teacherLayout(),
-        "answers": room.getMembersAnswers()
+        "answers": room.getMembersAnswers(),
+        "members": dbFun.memberInfo(db, room.members, room.memberSessions.keys())
     }
 
 def updateRoomLayout(room):
@@ -164,7 +175,7 @@ def updateRoomLayout(room):
         socketio.emit("roomUpdate", {
             "status": "success",
             "roomLayout": layout,
-            "answers": room.getMemberAnswers(username)
+            "answers": room.getMemberAnswers(db, username)
         }, sid=sid)
 
 def updateRoomOverview(room):
@@ -408,6 +419,6 @@ def cloneRoom(roomId):
 def whoAmI():
     username = request.environ["AUTH_USER"]
     roles = ["student"]
-    if username in app.config["TEACHERS"]:
+    if isTeacher(username):
         roles.append("teacher")
     return roles

@@ -7,9 +7,11 @@ class Room:
         self.description = description
         self.author = author
         self.widgets = []
+
         self.widgetIdCounter = 0
         self.memberSessions = {}
         self.memberAnswers = {}
+        self.members = []
 
     def widget(self, id):
         for w in self.widgets:
@@ -38,6 +40,7 @@ class Room:
 
     def join(self, username, sessionId):
         self.memberSessions[username] = sessionId
+        self.members.append(username)
 
     def leave(self, sessionId):
         for username, session in self.memberSessions.items():
@@ -86,7 +89,7 @@ class Room:
         return self.memberAnswers[username]
 
     def getMembersAnswers(self):
-        return { username: self.getMemberAnswers(username) for username in self.memberSessions.keys()}
+        return { username: self.getMemberAnswers(username) for username in self.members}
 
 class RoomSuite:
     def __init__(self):
