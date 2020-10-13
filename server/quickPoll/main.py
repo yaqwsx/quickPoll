@@ -175,7 +175,7 @@ def updateRoomLayout(room):
         socketio.emit("roomUpdate", {
             "status": "success",
             "roomLayout": layout,
-            "answers": room.getMemberAnswers(db, username)
+            "answers": room.getMemberAnswers(username)
         }, sid=sid)
 
 def updateRoomOverview(room):
